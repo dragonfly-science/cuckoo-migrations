@@ -3,12 +3,18 @@
 Cuckoo is a simple django app for assisting with database migration.
 
 
-There is no clever trickiness, magic, or other intelligence to automatically generate your sql. For that you should be using [South](http://south.aeracode.org). With cuckoo, you write sql patches, and the application is only used to keep track of which have already been applied. 
+There is no clever trickiness, magic, or other intelligence to automatically
+generate your sql. For that you should be using
+[South](http://south.aeracode.org). With cuckoo, you write sql patches, and the
+application is only used to keep track of which have already been applied.  We
+use cuckoo because we have messed with the django permissions system, in a way
+that has somehow broken south.
+
 
 Cuckoo works as follows:
-1. You write some sql patches
-2. Put them in a directory
-3. Run ./manage.py cuckoo to execute any patches that haven't yet been run
+ 1. You write some sql patches
+ 2. Put them in a directory
+ 3. Run `./manage.py cuckoo` to execute any patches that haven't yet been run
 
 ## Installation
 
@@ -17,11 +23,11 @@ Cuckoo works as follows:
 The easiest way is to use the `pip` installer. 
 
 ### Modify your django settings file
-1. Add `cuckoo` to your `INSTALLED_APPS`
-2. Make a directory, say `patches`, to hold your patches
-3. Add the a string `PATCHES_PATH` to settings that holds the full path to the patches 
+ 1. Add `cuckoo` to your `INSTALLED_APPS`
+ 2. Make a directory, say `patches`, to hold your patches
+ 3. Add the a string `PATCHES_PATH` to settings that holds the full path to the patches 
         directory, e.g., `PATCHES_PATH = '/home/edward/django/www/patches'`
-4. Run ./manage.py syncdb, or pipe the output from `./manage.py sql cuckoo` at your database 
+ 4. Run ./manage.py syncdb, or pipe the output from `./manage.py sql cuckoo` at your database 
 
 ## Usage
     
