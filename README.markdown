@@ -8,8 +8,8 @@ generate your sql. For that you should be using
 [South](http://south.aeracode.org). With cuckoo, you write sql patches, and the
 application is only used to keep track of which have already been applied.  We
 use cuckoo because we have messed with the django permissions system, in a way
-that has somehow broken south.
-
+that has somehow broken south. You might use it because you like to hand-roll
+your sql.
 
 Cuckoo works as follows:
  
