@@ -44,4 +44,9 @@ holds a record of the patches that have been run. A Patch object has the fields
 **
 
 
+## The shining cuckoo
+
+The [shining cuckoo](http://en.wikipedia.org/wiki/Shining_Bronze_Cuckoo) 
+migrates from  the Solomon Islands, Papua Guinea region to New Zealand in the spring. It breeds in New Zealand in the summer. It has a distinctive call, and is often heard, but rarely seen. So, cuckoo is for small beautiful migrations.
+
 ![Shining cuckoo](http://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Chrysococcyx_lucidus_-_Meehan_Range.jpg/220px-Chrysococcyx_lucidus_-_Meehan_Range.jpg "Shining cuckoo, cc photograph by JJ Harrison)
