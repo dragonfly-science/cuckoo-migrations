@@ -23,7 +23,7 @@ Cuckoo works as follows:
 
 The easiest way is to use the `pip` installer:
 
-    pip install git+ssh://git@github.com/echweb/echweb-utils.git
+    pip install git+ssh://git@github.com/dragonfly-science/cuckoo.git
 
 
 ### Modify your django settings file
@@ -44,4 +44,4 @@ holds a record of the patches that have been run. A Patch object has the fields
 **
 
 
-
+![Shining cuckoo](http://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Chrysococcyx_lucidus_-_Meehan_Range.jpg/220px-Chrysococcyx_lucidus_-_Meehan_Range.jpg "Shining cuckoo, cc photograph by JJ Harrison)
