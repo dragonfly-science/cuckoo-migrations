@@ -12,6 +12,7 @@ that has somehow broken south.
 
 
 Cuckoo works as follows:
+ 
  1. You write some sql patches
  2. Put them in a directory
  3. Run `./manage.py cuckoo` to execute any patches that haven't yet been run
@@ -20,7 +21,10 @@ Cuckoo works as follows:
 
 ### Get the code
 
-The easiest way is to use the `pip` installer. 
+The easiest way is to use the `pip` installer:
+
+    pip install git+ssh://git@github.com/echweb/echweb-utils.git
+
 
 ### Modify your django settings file
  1. Add `cuckoo` to your `INSTALLED_APPS`
