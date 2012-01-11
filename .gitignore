@@ -1,3 +1,4 @@
 build/*
+cuckoo.egg-info/*
 *.pyc
 *~
