@@ -1,17 +1,17 @@
-from cuckoo.models import get_patches, run, force, fake, tidy  
+from .. import models
 from django.core.management.base import BaseCommand, CommandError
 
 help_string = """Run database patches using cuckoo
 ./python manage.py cuckoo will run any patches that haven't yet been applied
 """
 
-commands = {'run':run, 'force':force, 'fake':fake, 'tidy': tidy, 'get_patches':get_patches}
-command_list = ['run', 'force', 'fake', 'tidy', 'get_patches']
+commands = {'run':models.models.run, 'force':models.models.force, 'fake':models.models.fake, 'tidy': models.models.tidy}
+command_list = ['run', 'force', 'fake', 'tidy']
 for command in command_list:
-    help_string.append('\n%15s   %s'%(command, commands[command].__doc__))
+    help_string += '\n%15s   %s'%(command, commands[command].__doc__)
     
 class Command(BaseCommand):
-    args = '[run, force, fake, tidy, get_patches]'
+    args = '[run, force, fake, tidy]'
     help = help_string
 
     def handle(self, *args, **options):
@@ -21,8 +21,8 @@ class Command(BaseCommand):
         for command in args:
             try:    
                 results = commands[command]()
-                self.stdout.write('Successfully ran cuckoo (%s)' % command)
+                self.stdout.write('Successfully ran cuckoo (%s)\n' % command)
                 if results:
-                    self.stdout.write(results)
+                    self.stdout.write(str(results) + '\n')
             except KeyError:
                 raise CommandError('Unknown command %s' % command)

@@ -1,6 +1,8 @@
-from django.db import models, connection, transaction, DatabaseError
-from settings import PATCH_DIRECTORY
 import os
+
+from django.db import models, connection, transaction, DatabaseError
+from django.conf import settings
+import sqlparse
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
@@ -17,27 +19,28 @@ class Patch(models.Model):
         cursor = connection.cursor()
         try:
             cursor.execute(self.sql)
-            self.output = str(cursor.fetchall())
+            self.output = cursor.fetchall()
             self.save()
             transaction.commit()
         except:
             transaction.rollback()
-            msg = "Error while executing the patch %s" % self.patch
-            raise DatabaseError, msg
+            raise
+            #msg = "Error while executing the patch %s" % self.patch
+            #raise DatabaseError, msg
 
 def get_patches():
     """Return a list of all patches on disk"""
     patches = []
-    for f in os.listdir(PATCH_DIRECTORY): 
+    for f in os.listdir(settings.CUCKOO_DIRECTORY): 
         if f.endswith('.sql'):
-            sql = open(os.path.join(PATCH_DIRECTORY, f)).read()
+            sql = open(os.path.join(settings.CUCKOO_DIRECTORY, f)).read()
             patches.append((f, sql))
     return patches
 
 def run():
     """Run patches that have not yet been run"""
     patches = get_patches()
-    for patch, sql in patches():
+    for patch, sql in patches:
         try:
             Patch.objects.get(patch=patch)
         except Patch.DoesNotExist:
