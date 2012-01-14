@@ -1,8 +1,10 @@
 import os
 
 from django.db import models, connection, transaction, DatabaseError
-from django.conf import settings
-import sqlparse
+try:
+    from django.conf import settings
+except ImportError:
+    pass
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
