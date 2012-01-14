@@ -1,5 +1,6 @@
-from .. import models
+from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
+from .. import models
 
 help_string = """Run database patches using cuckoo
 ./python manage.py cuckoo will run any patches that haven't yet been applied
@@ -11,6 +12,10 @@ for command in command_list:
     help_string += '\n%15s   %s'%(command, commands[command].__doc__)
     
 class Command(BaseCommand):
+    option_list = BaseCommand.option_list + (
+    make_option('--path', '-p', dest='path',
+        help='Directory where patches are stored'),
+        )
     args = '[run, force, fake, tidy]'
     help = help_string
 
@@ -20,7 +25,7 @@ class Command(BaseCommand):
             args = ['run']
         for command in args:
             try:    
-                results = commands[command]()
+                results = commands[command](directory=options.get(directory))
                 self.stdout.write('Successfully ran cuckoo (%s)\n' % command)
                 if results:
                     self.stdout.write(str(results) + '\n')
