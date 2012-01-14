@@ -29,8 +29,8 @@ The easiest way is to use the `pip` installer:
 ### Modify your django settings file
  1. Add `cuckoo` to your `INSTALLED_APPS`
  2. Make a directory, say `patches`, to hold your patches
- 3. Add the a string `PATCHES_PATH` to settings that holds the full path to the patches 
-        directory, e.g., `PATCHES_PATH = '/home/edward/django/www/patches'`
+ 3. Optionally, add a string `CUCKOO_DIRECTORY` to settings that holds the full path to the patches 
+        directory, e.g., `CUCKOO_DIRECTORY = '/home/edward/django/www/patches'`
  4. Run ./manage.py syncdb, or pipe the output from `./manage.py sql cuckoo` at your database 
 
 ## Usage
