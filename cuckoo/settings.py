@@ -9,5 +9,5 @@ DATABASES = {
 
 INSTALLED_APPS = ['cuckoo',]
 
-CUCKOO_DIRECTORY = 'test_patches'
+#CUCKOO_DIRECTORY = 'test_patches'
 

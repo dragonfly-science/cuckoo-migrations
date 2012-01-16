@@ -1,10 +1,13 @@
 import os
+import logging
 
 from django.db import models, connection, transaction, DatabaseError
 try:
     from django.conf import settings
 except ImportError:
     pass
+
+logging.basicConfig(format='[CUCKOO] %(levelname)s: %(message)s', level=logging.INFO)
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
@@ -16,7 +19,7 @@ class Patch(models.Model):
     class Meta:
         ordering = ['id']
 
-    def execute(self):
+    def execute(self, quiet=False):
         """Apply a patch"""
         cursor = connection.cursor()
         try:
@@ -24,16 +27,21 @@ class Patch(models.Model):
             self.output = cursor.fetchall()
             self.save()
             transaction.commit()
+            if not quiet:
+                logging.info('Successfully ran patch %s' % self.patch)
         except:
             transaction.rollback()
-            raise
-            #msg = "Error while executing the patch %s" % self.patch
-            #raise DatabaseError, msg
+            logging.error("Error while executing patch %s" % self.patch)
+            raise DatabaseError, msg
+
 
 def get_patches(directory):
     """Return a list of all patches on disk"""
     if directory is None:
-        directory = settings.CUCKOO_DIRECTORY
+        try:
+            directory = settings.CUCKOO_DIRECTORY
+        except:
+            directory = 'sql-patches'
     patches = []
     for f in os.listdir(directory): 
         if f.endswith('.sql'):
@@ -41,7 +49,7 @@ def get_patches(directory):
             patches.append((f, sql))
     return patches
 
-def run(directory=None):
+def run(directory=None, quiet=False, execute=True):
     """Run patches that have not yet been run"""
     patches = get_patches(directory)
     for patch, sql in patches:
@@ -49,9 +57,16 @@ def run(directory=None):
             Patch.objects.get(patch=patch)
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql)
-            p.execute()
-        
-def force(directory=None):
+            if execute:
+                p.execute(quiet)
+            elif not quiet:
+                logging.info('Would have run patch %s' % p.patch)
+                
+def dryrun(directory=None, quiet):
+    """Call run, without executing the patches"""
+    run(directory, execute=False)
+
+def force(directory=None, quiet=False):
     """Run all patches, even if they are already in the database"""
     patches = get_patches(directory)
     for patch, sql in patches:
@@ -60,7 +75,8 @@ def force(directory=None):
             p.sql = sql
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql, output='')
-        p.execute()
+        p.execute(quiet)
+
 
 def fake(directory=None):
     """Add all patches to the database so that they are not run subsequently"""
@@ -72,11 +88,7 @@ def fake(directory=None):
             p = Patch(patch=patch, sql=sql, output='')
             p.save()
 
-def tidy(directory=None):
-    """Remove any patches from the database that are not on disk"""
-    patches = get_patches(directory)
-    saved = Patch.objects.all()
-    for s in saved:
-        if s.patch not in patches:
-            s.delete()
+def clean():
+    """Remove all patches from the database"""
+    Patch.objects.all().delete()
     

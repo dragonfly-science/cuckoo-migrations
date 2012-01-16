@@ -1,10 +1,12 @@
 import os.path
+import sys
+from StringIO import StringIO
 
+from django.conf import settings
 from django.db import models
-from django.test.utils import setup_test_environment
 from django.utils import unittest
 
-from cuckoo.models import Patch, get_patches, run, fake, force, tidy
+from cuckoo.models import Patch, get_patches, run, fake, force, clean, dryrun
 
 class Species(models.Model):
     common_name = models.CharField(max_length=50)
@@ -51,7 +53,7 @@ class Run(unittest.TestCase):
         run()
         s = Species.objects.all()
         self.assertEqual(s[0].genus, 'Chrysococcyx') 
-        self.assertEqual(s[1].genus, 'Eudynamis')
+        self.assertEqual(s[1].genus, 'Eudynamys')
 
 class Fake(unittest.TestCase):
     def setUp(self):
@@ -60,14 +62,14 @@ class Fake(unittest.TestCase):
         Species.objects.all().delete()
     
     def test_fake(self):
-        """Test that running 'fake' creates patches, but doesn't execute them"""
+        """Test that running 'fake' creates new patches, but doesn't execute them"""
         self.assertEqual(len(Patch.objects.all()), 0)
         fake()
         self.assertEqual(len(Patch.objects.all()), 2) #Two patches created
         self.assertEqual(len(Species.objects.all()), 0) #No species created
         
     def test_fake_times(self):
-        """Test that running 'fake' doesn't change the times"""
+        """Test that running 'fake' does nothing if teh patches have already been run"""
         run()
         self.assertEqual(len(Patch.objects.all()), 2)
         t1 = [x.last_modified for x in Patch.objects.all()]
@@ -96,9 +98,44 @@ class Force(unittest.TestCase):
         t2 = [x.last_modified for x in Patch.objects.all()]
         for i in range(len(t1)):
             self.assertNotEqual(t1[i], t2[i]) #Running force changed the modification times
-    
-if __name__ == '__main__':
-    setup_test_environment()
-    unittest.main()
 
+
+class Directory(unittest.TestCase):
+    """Check that the directory mechanism works as expected"""
+    def setUp(self):
+        """Reset the databases before each test and set path to patches"""
+        Patch.objects.all().delete()
+        Species.objects.all().delete()
+        settings.CUCKOO_DIRECTORY = 'test_patches'
+
+    def test_settings_directory(self):
+        run()
+        p = Species.objects.get(genus = 'Eudynamys')
+        self.assertEqual(p.species, 'orientalis')
+
+    def test_argument_directory(self):
+        run(directory = 'sql-patches')
+        p = Species.objects.get(genus = 'Eudynamys')
+        self.assertEqual(p.species, 'taitensis')
+
+    def test_two_directories(self):
+        """Patches with the same name should only be run once"""
+        run() #Use value from settings
+        run(directory = 'sql-patches')
+        p = Species.objects.filter(genus = 'Eudynamys')
+        self.assertEqual(len(p), 2)
+
+class Clean(unittest.TestCase):
+    def setUp(self):
+        """Reset the databases before each test and set path to patches"""
+        Patch.objects.all().delete()
+        Species.objects.all().delete()
+
+    def test_remove_all_patches(self):
+        """'clean' removes all patch records from the database"""
+        p = Patch.objects.all()
+        run()
+        self.assertEqual(len(Patch.objects.all()), 2)
+        clean()
+        self.assertEqual(len(Patch.objects.all()), 0)
 
