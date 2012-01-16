@@ -55,15 +55,22 @@ def force(directory=None):
     """Run all patches, even if they are already in the database"""
     patches = get_patches(directory)
     for patch, sql in patches:
-        p = Patch(patch=patch, sql=sql, output='')
+        try:
+            p = Patch.objects.get(patch=patch)
+            p.sql = sql
+        except Patch.DoesNotExist:
+            p = Patch(patch=patch, sql=sql, output='')
         p.execute()
 
 def fake(directory=None):
     """Add all patches to the database so that they are not run subsequently"""
     patches = get_patches(directory)
     for patch, sql in patches:
-        p = Patch(patch=patch, sql=sql, output='')
-        p.save()
+        try:
+            p = Patch.objects.get(patch=patch)
+        except Patch.DoesNotExist:
+            p = Patch(patch=patch, sql=sql, output='')
+            p.save()
 
 def tidy(directory=None):
     """Remove any patches from the database that are not on disk"""

@@ -1,3 +1,3 @@
 INSERT INTO cuckoo_species VALUES
-    ('Shining bronze cuckoo', 'Chrysococcyx', 'lucidus')
+    ('1', 'Shining bronze cuckoo', 'Chrysococcyx', 'lucidus')
 ;
