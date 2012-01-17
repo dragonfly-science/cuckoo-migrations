@@ -14,11 +14,6 @@ from django.utils import unittest
 from cuckoo.models import Patch, get_patches, run, fake, force, clean, dryrun
 from species.models import Species
 
-#class Species(models.Model):
-#    common_name = models.CharField(max_length=50)
-#    genus = models.CharField(max_length=50)
-#    species = models.CharField(max_length=50)
-
 class Run(unittest.TestCase):
     def setUp(self):
         """Reset the databases before each test"""

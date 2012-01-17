@@ -5,7 +5,6 @@ from .. import models
 help_string = """Run database patches using cuckoo
 ./python manage.py cuckoo will run any patches that haven't yet been applied
 """
-
 commands = {'run':models.models.run, 
     'dryrun': models.models.dryrun,
     'force':models.models.force, 
@@ -40,8 +39,5 @@ class Command(BaseCommand):
                 for argument in command_arguments[command]:
                     kwargs[argument] = options.get(argument)
                 results = commands[command](**kwargs)
-                self.stdout.write('Successfully ran cuckoo (%s)\n' % command)
-                if results:
-                    self.stdout.write(str(results) + '\n')
             except KeyError:
                 raise CommandError('Unknown command %s' % command)

@@ -7,7 +7,12 @@ try:
 except ImportError:
     pass
 
-logging.basicConfig(format='[CUCKOO] %(levelname)s: %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+stream = logging.StreamHandler()
+stream.setLevel(logging.INFO)
+formatter = logging.Formatter('[CUCKOO %(level)s] %(message)s')
+stream.setFormatter(formatter)
+logger.addHandler(stream)
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
@@ -22,17 +27,16 @@ class Patch(models.Model):
     def execute(self, quiet=False):
         """Apply a patch"""
         cursor = connection.cursor()
-        try:
-            cursor.execute(self.sql)
-            self.output = cursor.fetchall()
-            self.save()
-            transaction.commit()
-            if not quiet:
-                logging.info('Successfully ran patch %s' % self.patch)
-        except:
-            transaction.rollback()
-            logging.error("Error while executing patch %s" % self.patch)
-            raise DatabaseError, msg
+        with transaction.commit_on_success():
+            try:
+                cursor.execute(self.sql)
+                self.output = cursor.fetchall()
+                self.save()
+                if not quiet:
+                    logger.info('Successfully ran patch %s' % self.patch)
+            except:
+                logger.error("Error while executing patch %s" % self.patch)
+                raise
 
 
 def get_patches(directory):
@@ -60,7 +64,7 @@ def run(directory=None, quiet=False, execute=True):
             if execute:
                 p.execute(quiet)
             elif not quiet:
-                logging.info('Would have run patch %s' % p.patch)
+                logger.info('Would have run patch %s' % p.patch)
                 
 def dryrun(directory=None):
     """Call run, without executing the patches"""
@@ -87,7 +91,7 @@ def fake(directory=None, quiet=False):
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql, output='')
             p.save()
-            logging.info('Fake-run patch %s' % p.patch)
+            logger.info('Fake-run patch %s' % p.patch)
 
 def clean():
     """Remove all patches from the database"""
