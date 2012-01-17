@@ -1,5 +1,5 @@
 import os
-import logging
+import sys
 
 from django.db import models, connection, transaction, DatabaseError
 try:
@@ -7,12 +7,6 @@ try:
 except ImportError:
     pass
 
-logger = logging.getLogger(__name__)
-stream = logging.StreamHandler()
-stream.setLevel(logging.INFO)
-formatter = logging.Formatter('[CUCKOO %(level)s] %(message)s')
-stream.setFormatter(formatter)
-logger.addHandler(stream)
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
@@ -33,9 +27,9 @@ class Patch(models.Model):
                 self.output = cursor.fetchall()
                 self.save()
                 if not quiet:
-                    logger.info('Successfully ran patch %s' % self.patch)
+                    print '[CUCKOO] Ran patch %s' % self.patch
             except:
-                logger.error("Error while executing patch %s" % self.patch)
+                print "[CUCKOO] Error while executing patch %s" % self.patch
                 raise
 
 
@@ -53,7 +47,7 @@ def get_patches(directory):
             patches.append((f, sql))
     return patches
 
-def run(directory=None, quiet=False, execute=True):
+def run(stream=sys.stdout, directory=None, quiet=False, execute=True):
     """Run patches that have not yet been run"""
     patches = get_patches(directory)
     for patch, sql in patches:
@@ -64,13 +58,13 @@ def run(directory=None, quiet=False, execute=True):
             if execute:
                 p.execute(quiet)
             elif not quiet:
-                logger.info('Would have run patch %s' % p.patch)
+                print '[CUCKOO] Would have run patch %s' % p.patch
                 
-def dryrun(directory=None):
+def dryrun(stream=sys.stdout, directory=None):
     """Call run, without executing the patches"""
     run(directory, execute=False)
 
-def force(directory=None, quiet=False):
+def force(stream=sys.stdout, directory=None, quiet=False):
     """Run all patches, even if they are already in the database"""
     patches = get_patches(directory)
     for patch, sql in patches:
@@ -82,7 +76,7 @@ def force(directory=None, quiet=False):
         p.execute(quiet)
 
 
-def fake(directory=None, quiet=False):
+def fake(stream=sys.stdout, directory=None, quiet=False):
     """Add all patches to the database so that they are not run subsequently"""
     patches = get_patches(directory)
     for patch, sql in patches:
@@ -91,9 +85,11 @@ def fake(directory=None, quiet=False):
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql, output='')
             p.save()
-            logger.info('Fake-run patch %s' % p.patch)
+            print '[CUCKOO] Fake-run patch %s' % p.patch
 
-def clean():
+def clean(stream=sys.stdout):
     """Remove all patches from the database"""
-    Patch.objects.all().delete()
+    for p in Patch.objects.all():
+        p.delete()
+    print '[CUCKOO] Removed all patches from the database'
     

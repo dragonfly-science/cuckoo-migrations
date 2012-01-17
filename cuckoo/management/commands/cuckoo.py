@@ -38,6 +38,6 @@ class Command(BaseCommand):
                 kwargs = {}
                 for argument in command_arguments[command]:
                     kwargs[argument] = options.get(argument)
-                results = commands[command](**kwargs)
+                results = commands[command](stream=self.stdout, **kwargs)
             except KeyError:
                 raise CommandError('Unknown command %s' % command)

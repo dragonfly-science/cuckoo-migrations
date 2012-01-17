@@ -107,7 +107,7 @@ class Directory(unittest.TestCase):
         """Reset the databases before each test and set path to patches"""
         Patch.objects.all().delete()
         Species.objects.all().delete()
-        settings.CUCKOO_DIRECTORY = 'test_patches'
+        settings.CUCKOO_DIRECTORY = 'sql-patches/test-patches'
 
     def test_settings_directory(self):
         run()
