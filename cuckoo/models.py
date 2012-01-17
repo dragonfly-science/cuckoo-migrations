@@ -62,7 +62,7 @@ def run(directory=None, quiet=False, execute=True):
             elif not quiet:
                 logging.info('Would have run patch %s' % p.patch)
                 
-def dryrun(directory=None, quiet):
+def dryrun(directory=None):
     """Call run, without executing the patches"""
     run(directory, execute=False)
 
@@ -78,7 +78,7 @@ def force(directory=None, quiet=False):
         p.execute(quiet)
 
 
-def fake(directory=None):
+def fake(directory=None, quiet=False):
     """Add all patches to the database so that they are not run subsequently"""
     patches = get_patches(directory)
     for patch, sql in patches:
@@ -87,6 +87,7 @@ def fake(directory=None):
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql, output='')
             p.save()
+            logging.info('Fake-run patch %s' % p.patch)
 
 def clean():
     """Remove all patches from the database"""

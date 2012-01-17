@@ -2,3 +2,4 @@ build/*
 cuckoo.egg-info/*
 *.pyc
 *~
+cuckoo.sqlite

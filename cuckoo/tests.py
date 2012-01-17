@@ -1,17 +1,23 @@
+import os
 import os.path
 import sys
 from StringIO import StringIO
+
+os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
+from django.test.utils import setup_test_environment
+setup_test_environment()
 
 from django.conf import settings
 from django.db import models
 from django.utils import unittest
 
 from cuckoo.models import Patch, get_patches, run, fake, force, clean, dryrun
+from species.models import Species
 
-class Species(models.Model):
-    common_name = models.CharField(max_length=50)
-    genus = models.CharField(max_length=50)
-    species = models.CharField(max_length=50)
+#class Species(models.Model):
+#    common_name = models.CharField(max_length=50)
+#    genus = models.CharField(max_length=50)
+#    species = models.CharField(max_length=50)
 
 class Run(unittest.TestCase):
     def setUp(self):

@@ -7,7 +7,6 @@ DATABASES = {
     }
 }
 
-INSTALLED_APPS = ['cuckoo',]
-
-#CUCKOO_DIRECTORY = 'test_patches'
+# cuckoo is the main app, and species is a simple app used for testing
+INSTALLED_APPS = ['cuckoo', 'species']
 
