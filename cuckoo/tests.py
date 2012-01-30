@@ -3,10 +3,6 @@ import os.path
 import sys
 from StringIO import StringIO
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "settings"
-from django.test.utils import setup_test_environment
-setup_test_environment()
-
 from django.conf import settings
 from django.db import models
 from django.utils import unittest
