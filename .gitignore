@@ -3,4 +3,3 @@ cuckoo.egg-info/*
 *.pyc
 *~
 *swp
-cuckoo.sqlite
