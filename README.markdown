@@ -33,13 +33,18 @@ The easiest way is to use the `pip` installer:
 
 ## Usage
     
-When you install cuckoo, it creates a table 'cuckoo_patch' in your database. This table
+When you install cuckoo, it creates a table `cuckoo_patch` in your database. This table
 holds a record of the patches that have been run. A Patch object has the fields
     - patch: The filename of the patch (must be unique)
-    - 
+    - sql: The content of the patch file (not really necessary)
+    - output: The output from running the patch
+    - last\_updated: When the patch was actually run.
+
+Cuckoo needs to know how to find the database. There are two ways of doing this. 
+ 1. The standard django way, see [https://docs.djangoproject.com/en/dev/ref/settings/#databases]
+ 2. By setting a `CUCKOO_DATABASE_STRING` string, with `%s` indicating where the patch filename should be substituted.
 
 
-**
 
 
 ## The shining cuckoo

@@ -6,5 +6,6 @@ setup(name = "cuckoo",
     author = "Edward Abraham",
     author_email = "edward@dragonfly.co.nz",
     url = "https://github.com/dragonfly-science/cuckoo",
-    packages = ['cuckoo'],
+    packages = ['cuckoo', 'cuckoo.management', 'cuckoo.management.commands'],
+    scripts = ['scripts/cuckoo'],
 ) 

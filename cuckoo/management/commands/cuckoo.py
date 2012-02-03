@@ -1,18 +1,19 @@
+import sys
 from optparse import make_option
 from django.core.management.base import BaseCommand, CommandError
 from .. import models
 
-help_string = """Run database patches using cuckoo
-./python manage.py cuckoo will run any patches that haven't yet been applied
+help_string = """cuckoo will run any database patches that haven't yet been applied
 """
 commands = {'run':models.models.run, 
     'dryrun': models.models.dryrun,
     'force':models.models.force, 
     'fake':models.models.fake, 
+    'status':models.models.status,
     'clean': models.models.clean,
     }
-command_list = ['run', 'dryrun', 'force', 'fake', 'clean']
-command_arguments = {'run': ('directory', 'quiet'), 'dryrun': ('directory',),
+command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean']
+command_arguments = {'status':('directory',), 'run': ('directory', 'quiet'), 'dryrun': ('directory',),
     'force': ('directory', 'quiet'), 'fake': ('directory', 'quiet'), 'clean':()}
 
 for command in command_list:
@@ -31,6 +32,15 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         results = []
+
+        # check that the database has been initialised
+        try:
+            list(models.models.Patch.objects.all())
+        except:
+            print "The database has not been initialised yet."
+            print "Please run 'cuckoo init' first"
+            sys.exit(1)
+
         if not args:
             args = ['run']
         for command in args:
