@@ -5,6 +5,7 @@ from subprocess import Popen, PIPE, STDOUT
 from django.db import models, connection, transaction, DatabaseError
 from django.conf import settings
 
+class CuckooError(Exception): pass
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
@@ -31,11 +32,12 @@ class Patch(models.Model):
                 out, err = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
                 self.output = out
                 self.save()
+                if err:
+                    raise CuckooError(err)
                 if not quiet:
                     print '[CUCKOO] Ran patch %s' % self.patch
-            except:
-                print "[CUCKOO] Error while executing patch %s" % self.patch
-                raise
+            except Exception as e:
+                print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
             return
 
         # Else run it using the connection object
@@ -47,9 +49,8 @@ class Patch(models.Model):
                 self.save()
                 if not quiet:
                     print '[CUCKOO] Ran patch %s' % self.patch
-            except:
-                print "[CUCKOO] Error while executing patch %s" % self.patch
-                raise
+            except Exception as e:
+                print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
 
 
 def get_patches(directory):
@@ -63,10 +64,9 @@ def get_patches(directory):
     if not os.path.exists(directory):
         print "There is no patches directory: looking for a directory called '%s'.\n  note: see 'CUCKOO_DIRECTORY'" % directory
         sys.exit(1)
-    for f in os.listdir(directory): 
-        if f.endswith('.sql'):
-            sql = open(os.path.join(directory, f)).read()
-            patches.append((f, sql))
+    for f in sorted(filter(lambda p: p.endswith('.sql'), os.listdir(directory))):
+        sql = open(os.path.join(directory, f)).read()
+        patches.append((f, sql))
     return patches
 
 def run(stream=sys.stdout, directory=None, quiet=False, execute=True):
