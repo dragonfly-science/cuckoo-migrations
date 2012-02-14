@@ -45,7 +45,10 @@ class Patch(models.Model):
         with transaction.commit_on_success():
             try:
                 cursor.execute(self.sql)
-                self.output = cursor.fetchall()
+                try:
+                    self.output = cursor.fetchall()
+                except:
+                    self.output = ''
                 self.save()
                 if not quiet:
                     print '[CUCKOO] Ran patch %s' % self.patch
