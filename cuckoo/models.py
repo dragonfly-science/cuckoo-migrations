@@ -1,4 +1,4 @@
-import os
+import os,re
 import sys
 from subprocess import Popen, PIPE, STDOUT
 
@@ -29,11 +29,13 @@ class Patch(models.Model):
             patch_file = os.path.join(directory, self.patch)
             cmd = database_string % patch_file
             try:
-                out, err = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE).communicate()
-                self.output = out
-                self.save()
-                if err:
+                p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+                out, err = p.communicate()
+                if p.returncode != 0 or re.search('ERROR', err):
                     raise CuckooError(err)
+                else: 
+                    self.output = out
+                    self.save()
                 if not quiet:
                     print '[CUCKOO] Ran patch %s' % self.patch
             except Exception as e:
