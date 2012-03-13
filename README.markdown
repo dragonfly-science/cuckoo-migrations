@@ -44,14 +44,18 @@ holds a record of the patches that have been run. A Patch object has the fields
 Cuckoo needs to know how to find the database. There are two ways of doing this.  
 
  1. The standard django way, see https://docs.djangoproject.com/en/dev/ref/settings/#databases
- 2. By setting a `CUCKOO_DATABASE_STRING` string, with `%s` indicating where the patch filename should be substituted.
-
+ 2. By setting a `CUCKOO_DATABASE_STRING` string, with `%s` indicating where the patch filename should be substituted. 
+This is useful if your sql patches contain commands that are not parsed by the python database connection layer. For a
+postgres database you might have `database_string = 'psql %(NAME)s -U %(USER)s -h %(HOST)s -f '%DATABASES['default']` in your 
+settings file, with `CUCKOO_DATABASE_STRING = database_string + '%s'`.
 
 
 
 ## The shining cuckoo
 
 The [shining cuckoo](http://en.wikipedia.org/wiki/Shining_Bronze_Cuckoo) 
-migrates from  the Solomon Islands, Papua Guinea region to New Zealand in the spring. It breeds in New Zealand in the summer. It has a distinctive call, and is often heard, but rarely seen. So, cuckoo is for small beautiful migrations that you only notice if you pay attention.
+migrates from  the Solomon Islands, Papua Guinea region to New Zealand in the spring. It breeds in New Zealand in the summer. It has a distinctive call, and is often heard, but rarely seen. Cuckoos lay
+their eggs in the nest of other birds (the shining cuckoo parasitises the gray warbler). The cuckoo migrations systems lets
+you put your own eggs into the django nest.
 
 ![Shining cuckoo](http://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Chrysococcyx_lucidus_-_Meehan_Range.jpg/220px-Chrysococcyx_lucidus_-_Meehan_Range.jpg "Shining cuckoo, cc photograph by JJ Harrison)
