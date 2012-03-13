@@ -55,7 +55,7 @@ settings file, with `CUCKOO_DATABASE_STRING = database_string + '%s'`.
 
 The [shining cuckoo](http://en.wikipedia.org/wiki/Shining_Bronze_Cuckoo) 
 migrates from  the Solomon Islands, Papua Guinea region to New Zealand in the spring. It breeds in New Zealand in the summer. It has a distinctive call, and is often heard, but rarely seen. Cuckoos lay
-their eggs in the nest of other birds (the shining cuckoo parasitises the gray warbler). The cuckoo migrations systems lets
-you put your own eggs into the django nest.
+their eggs in the nest of other birds (the shining cuckoo parasitises the [grey warbler](http://en.wikipedia.org/wiki/Grey_Gerygone)). The cuckoo migrations systems lets
+you put whatever you want into the django nest.
 
 ![Shining cuckoo](http://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Chrysococcyx_lucidus_-_Meehan_Range.jpg/220px-Chrysococcyx_lucidus_-_Meehan_Range.jpg "Shining cuckoo, cc photograph by JJ Harrison)
