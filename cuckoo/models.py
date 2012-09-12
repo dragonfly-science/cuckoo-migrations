@@ -1,6 +1,6 @@
 import os,re
 import sys
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT, call
 
 from django.db import models, connection, transaction, DatabaseError
 from django.conf import settings
@@ -19,43 +19,32 @@ class Patch(models.Model):
 
     def execute(self, quiet=False):
         """Apply a patch"""
+        directory = getattr(settings, 'CUCKOO_DIRECTORY', 'sql-patches')
+        patch_file = os.path.join(directory, self.patch)
+        try:
+            self.output = _execute_file(patch_file)
+            self.save()
+            if not quiet:
+                print '[CUCKOO] Ran patch %s' % self.patch
+        except Exception as e:
+            print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
 
-        # There are two modes, either using connection object
-        # or, if defined, a shell command
-        database_string = getattr(settings, 'CUCKOO_DATABASE_STRING', None)
-        if database_string:
-            # apply the string directly...
-            directory = getattr(settings, 'CUCKOO_DIRECTORY', 'sql-patches')
-            patch_file = os.path.join(directory, self.patch)
-            cmd = database_string % patch_file
-            try:
-                p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
-                out, err = p.communicate()
-                if p.returncode != 0 or re.search('ERROR', err):
-                    raise CuckooError(err)
-                else: 
-                    self.output = out
-                    self.save()
-                if not quiet:
-                    print '[CUCKOO] Ran patch %s' % self.patch
-            except Exception as e:
-                print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
-            return
+def _execute_file(patch_file):
 
-        # Else run it using the connection object
-        cursor = connection.cursor()
-        with transaction.commit_on_success():
-            try:
-                cursor.execute(self.sql)
-                try:
-                    self.output = cursor.fetchall()
-                except:
-                    self.output = ''
-                self.save()
-                if not quiet:
-                    print '[CUCKOO] Ran patch %s' % self.patch
-            except Exception as e:
-                print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
+    # If defined directly
+    database_string = getattr(settings, 'CUCKOO_DATABASE_STRING', None)
+    # Else use the settings default databse settings 
+    if not database_string:
+        database_string = 'psql --set ON_ERROR_STOP=1 %(NAME)s -U %(USER)s -h %(HOST)s -f ' % \
+                    settings.DATABASES['default']
+
+    cmd = database_string % patch_file
+    p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate()
+    if p.returncode != 0 or re.search('ERROR', err):
+        raise CuckooError(err)
+    return out
+
 
 
 def get_patches(directory):
@@ -133,3 +122,14 @@ def clean(stream=sys.stdout):
         p.delete()
     print '[CUCKOO] Removed all patches from the database'
     
+
+def refresh(stream=sys.stdout, dumpfile=None):
+    """Apply a dump file, dropping and creating database."""
+    call('dropdb   %(NAME)s -O %(USER)s -h %(HOST)s -ie' % settings.DATABASES['default'])
+    call('createdb %(NAME)s -O %(USER)s -h %(HOST)s -e' % settings.DATABASES['default'])
+    try:
+        output = _execute_file(dumpfile)
+        if not quiet:
+            print output
+    except Exception as e:
+        print CuckooError("[CUCKOO] Error while executing dump file %s\n %s" % (dumpfile, e))

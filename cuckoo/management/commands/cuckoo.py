@@ -5,16 +5,25 @@ from .. import models
 
 help_string = """cuckoo will run any database patches that haven't yet been applied
 """
-commands = {'run':models.models.run, 
-    'dryrun': models.models.dryrun,
-    'force':models.models.force, 
-    'fake':models.models.fake, 
-    'status':models.models.status,
-    'clean': models.models.clean,
+commands = {
+    'run':     models.models.run, 
+    'dryrun':  models.models.dryrun,
+    'force':   models.models.force, 
+    'fake':    models.models.fake, 
+    'status':  models.models.status,
+    'clean':   models.models.clean,
+    'refresh': models.models.clean,
     }
-command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean']
-command_arguments = {'status':('directory',), 'run': ('directory', 'quiet'), 'dryrun': ('directory',),
-    'force': ('directory', 'quiet'), 'fake': ('directory', 'quiet'), 'clean':()}
+command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean', 'refresh']
+command_arguments = {
+    'status':  ('directory',), 
+    'run':     ('directory', 'quiet'), 
+    'dryrun':  ('directory',),
+    'force':   ('directory', 'quiet'), 
+    'fake':    ('directory', 'quiet'), 
+    'clean':   (),
+    'refresh': ('dumpfile',),
+    }
 
 for command in command_list:
     help_string += '\n%15s   %s'%(command, commands[command].__doc__)
