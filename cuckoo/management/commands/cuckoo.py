@@ -12,7 +12,7 @@ commands = {
     'fake':    models.models.fake, 
     'status':  models.models.status,
     'clean':   models.models.clean,
-    'refresh': models.models.clean,
+    'refresh': models.models.refresh,
     }
 command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean', 'refresh']
 command_arguments = {
