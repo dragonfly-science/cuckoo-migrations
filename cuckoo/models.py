@@ -138,7 +138,8 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
     call(('dropdb   %(NAME)s -U %(USER)s -h %(HOST)s -e' + ('' if yes else 'i')) %\
             settings.DATABASES['default'], shell=True)
     if create:
-        call('createdb %(NAME)s -O %(USER)s -h %(HOST)s -e'  %\
+        print '[CUCKOO] Creating database.'
+        call('createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s -e'  %\
                 settings.DATABASES['default'], shell=True)
     print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
