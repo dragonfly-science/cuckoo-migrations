@@ -22,7 +22,7 @@ command_arguments = {
     'force':   ('directory', 'quiet'), 
     'fake':    ('directory', 'quiet'), 
     'clean':   (),
-    'refresh': ('dumpfile',),
+    'refresh': ('dumpfile', 'create', 'quiet', 'yes'),
     }
 
 for command in command_list:
@@ -30,13 +30,20 @@ for command in command_list:
     
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
-    make_option('--path', '-p', dest='path',
+    make_option('--path', '-p', dest='directory',
         help='Directory where patches are stored'),
+    make_option('--dumpfile', '-d', dest='dumpfile',
+        help='Dump file for refreshing database'),
+    make_option('--yes', '-y', dest='yes',
+        action="store_true", default=False,
+        help='Answer questions with yes'),
+    make_option('--create', '-C', dest='createdb',
+        help='Create database first'),
     make_option('--quiet', '-q', dest='quiet',
         action="store_true", default=False,
         help='Suppress output of logging information'),
         )
-    args = '[run, dryrun, force, fake, clean]'
+    args = '[run, dryrun, force, fake, clean, refresh]'
     help = help_string
 
     def handle(self, *args, **options):
@@ -46,9 +53,10 @@ class Command(BaseCommand):
         try:
             list(models.models.Patch.objects.all())
         except:
-            print "The database has not been initialised yet."
-            print "Please run 'cuckoo init' first"
-            sys.exit(1)
+            if 'refresh' not in args:
+                print "The database has not been initialised yet."
+                print "Please run 'cuckoo init' first"
+                sys.exit(1)
 
         if not args:
             args = ['run']

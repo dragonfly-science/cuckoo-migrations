@@ -1,8 +1,9 @@
 import os,re
+from copy import deepcopy
 import sys
 from subprocess import Popen, PIPE, STDOUT, call
 
-from django.db import models, connection, transaction, DatabaseError
+from django.db import models, connection
 from django.conf import settings
 
 class CuckooError(Exception): pass
@@ -29,16 +30,21 @@ class Patch(models.Model):
         except Exception as e:
             print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
 
-def _execute_file(patch_file):
+def _execute_file(patch_file, exists=True):
 
     # If defined directly
-    database_string = getattr(settings, 'CUCKOO_DATABASE_STRING', None)
+    db_string = getattr(settings, 'CUCKOO_DATABASE_STRING', None)
     # Else use the settings default databse settings 
-    if not database_string:
-        database_string = 'psql --set ON_ERROR_STOP=1 %(NAME)s -U %(USER)s -h %(HOST)s -f ' % \
-                    settings.DATABASES['default']
+    if not db_string:
+        env = deepcopy(settings.DATABASES['default'])
+        if not exists:
+            env['NAME'] = 'postgres'
+            env['USER'] = 'dba'
+        db_string = 'psql --set ON_ERROR_STOP=1 %(NAME)s -U %(USER)s -h %(HOST)s -f ' % env
+        db_string = db_string + '%s'
 
-    cmd = database_string % patch_file
+    cmd = db_string  % patch_file
+    print cmd
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     if p.returncode != 0 or re.search('ERROR', err):
@@ -123,12 +129,20 @@ def clean(stream=sys.stdout):
     print '[CUCKOO] Removed all patches from the database'
     
 
-def refresh(stream=sys.stdout, dumpfile=None):
+def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=None):
     """Apply a dump file, dropping and creating database."""
-    call('dropdb   %(NAME)s -O %(USER)s -h %(HOST)s -ie' % settings.DATABASES['default'])
-    call('createdb %(NAME)s -O %(USER)s -h %(HOST)s -e' % settings.DATABASES['default'])
+    if not dumpfile or not os.path.exists(dumpfile):
+        raise CuckooError('You must provide a valid dump file: %s' % dumpfile)
+
+    connection.close()
+    call(('dropdb   %(NAME)s -U %(USER)s -h %(HOST)s -e' + ('' if yes else 'i')) %\
+            settings.DATABASES['default'], shell=True)
+    if create:
+        call('createdb %(NAME)s -O %(USER)s -h %(HOST)s -e'  %\
+                settings.DATABASES['default'], shell=True)
+    print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
-        output = _execute_file(dumpfile)
+        output = _execute_file(dumpfile, exists=create)
         if not quiet:
             print output
     except Exception as e:
