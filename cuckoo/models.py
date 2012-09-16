@@ -30,7 +30,7 @@ class Patch(models.Model):
         except Exception as e:
             print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
 
-def _execute_file(patch_file, exists=True):
+def _execute_file(patch_file, exists=True, dba=False):
 
     # If defined directly
     db_string = getattr(settings, 'CUCKOO_DATABASE_STRING', None)
@@ -39,6 +39,7 @@ def _execute_file(patch_file, exists=True):
         env = deepcopy(settings.DATABASES['default'])
         if not exists:
             env['NAME'] = 'postgres'
+        if dba or not exists:
             env['USER'] = 'dba'
         db_string = 'psql --set ON_ERROR_STOP=1 %(NAME)s -U %(USER)s -h %(HOST)s -f ' % env
         db_string = db_string + '%s'
@@ -143,7 +144,7 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
                 settings.DATABASES['default'], shell=True)
     print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
-        output = _execute_file(dumpfile, exists=create)
+        output = _execute_file(dumpfile, exists=create, dba=True)
         if not quiet:
             print output
     except Exception as e:
