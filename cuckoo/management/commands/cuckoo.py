@@ -37,7 +37,7 @@ class Command(BaseCommand):
     make_option('--yes', '-y', dest='yes',
         action="store_true", default=False,
         help='Answer questions with yes'),
-    make_option('--create', '-C', dest='createdb',
+    make_option('--create', '-C', dest='create',
         action="store_true", default=False,
         help='Create database first'),
     make_option('--quiet', '-q', dest='quiet',
