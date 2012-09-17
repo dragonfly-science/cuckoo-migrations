@@ -138,12 +138,17 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
         raise CuckooError('You must provide a valid dump file: %s' % dumpfile)
 
     connection.close()
-    call(('dropdb   %(NAME)s -U %(USER)s -h %(HOST)s -e' + ('' if yes else 'i')) %\
-            settings.DATABASES['default'], shell=True)
+    env = settings.DATABASE['default']
+    dropcmd = ('dropdb   %(NAME)s -U %(USER)s -h %(HOST)s -e' + ('' if yes else 'i')) % env
+    if env.has_key('PORT'):
+        dropcmd += ' -p %(PORT)s ' % env
+    call(dropcmd, shell=True)
     if create:
         print '[CUCKOO] Creating database.'
-        call('createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s -e'  %\
-                settings.DATABASES['default'], shell=True)
+        createcmd = 'createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s -e'  % env
+        if env.has_key('PORT'):
+            createcmd += ' -p %(PORT)s ' % env
+        call(createcmd, shell=True)
     print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
         output = _execute_file(dumpfile, exists=create, dba=True)
