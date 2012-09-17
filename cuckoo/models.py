@@ -43,8 +43,8 @@ def _execute_file(patch_file, exists=True, dba=False):
             env['USER'] = 'dba'
         db_string = 'psql --set ON_ERROR_STOP=1 %(NAME)s -U %(USER)s -h %(HOST)s' % env
         if env.has_key('PORT'):
-            db_string += '-p %(PORT)s' % env
-        db_string = db_string + '-f %s'
+            db_string += ' -p %(PORT)s' % env
+        db_string = db_string + ' -f %s'
 
     cmd = db_string  % patch_file
     print cmd
