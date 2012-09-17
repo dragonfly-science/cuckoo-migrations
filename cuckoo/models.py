@@ -138,7 +138,7 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
         raise CuckooError('You must provide a valid dump file: %s' % dumpfile)
 
     connection.close()
-    env = settings.DATABASE['default']
+    env = settings.DATABASES['default']
     dropcmd = ('dropdb   %(NAME)s -U %(USER)s -h %(HOST)s -e' + ('' if yes else 'i')) % env
     if env.has_key('PORT'):
         dropcmd += ' -p %(PORT)s ' % env
