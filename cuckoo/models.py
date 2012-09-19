@@ -42,7 +42,7 @@ def _execute_file(patch_file, exists=True, dba=False):
         if dba or not exists:
             env['USER'] = 'dba'
         db_string = 'psql --set ON_ERROR_STOP=1 %(NAME)s -U %(USER)s -h %(HOST)s' % env
-        if env.has_key('PORT'):
+        if env.get('PORT', None):
             db_string += ' -p %(PORT)s' % env
         db_string = db_string + ' -f %s'
 
@@ -140,13 +140,13 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
     connection.close()
     env = settings.DATABASES['default']
     dropcmd = ('dropdb   %(NAME)s -U %(USER)s -h %(HOST)s -e' + ('' if yes else 'i')) % env
-    if env.has_key('PORT'):
+    if env.get('PORT', None):
         dropcmd += ' -p %(PORT)s ' % env
     call(dropcmd, shell=True)
     if create:
         print '[CUCKOO] Creating database.'
         createcmd = 'createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s -e'  % env
-        if env.has_key('PORT'):
+        if env.get('PORT', None):
             createcmd += ' -p %(PORT)s ' % env
         call(createcmd, shell=True)
     print '[CUCKOO] Applying dump file: %s' % dumpfile
