@@ -17,9 +17,9 @@ commands = {
 command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean', 'refresh']
 command_arguments = {
     'status':  ('directory',), 
-    'run':     ('directory', 'quiet'), 
+    'run':     ('directory', 'quiet', 'dba'), 
     'dryrun':  ('directory',),
-    'force':   ('directory', 'quiet'), 
+    'force':   ('directory', 'quiet', 'dba'), 
     'fake':    ('directory', 'quiet'), 
     'clean':   (),
     'refresh': ('dumpfile', 'create', 'quiet', 'yes'),
@@ -43,6 +43,9 @@ class Command(BaseCommand):
     make_option('--quiet', '-q', dest='quiet',
         action="store_true", default=False,
         help='Suppress output of logging information'),
+    make_option('--dba', '-D', dest='dba',
+        action="store_true", default=False,
+        help='Run psql scripts as user = dba'),
         )
     args = '[run, dryrun, force, fake, clean, refresh]'
     help = help_string

@@ -18,12 +18,12 @@ class Patch(models.Model):
     class Meta:
         ordering = ['id']
 
-    def execute(self, quiet=False):
+    def execute(self, quiet=False, dba=False):
         """Apply a patch"""
         directory = getattr(settings, 'CUCKOO_DIRECTORY', 'sql-patches')
         patch_file = os.path.join(directory, self.patch)
         try:
-            self.output = _execute_file(patch_file)
+            self.output = _execute_file(patch_file, dba=dba)
             self.save()
             if not quiet:
                 print '[CUCKOO] Ran patch %s' % self.patch
@@ -72,17 +72,17 @@ def get_patches(directory):
         patches.append((f, sql))
     return patches
 
-def run(stream=sys.stdout, directory=None, quiet=False, execute=True):
+def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False):
     """Run patches that have not yet been run"""
     patches = get_patches(directory)
-    
+
     for patch, sql in patches:
         try:
             Patch.objects.get(patch=patch)
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql)
             if execute:
-                p.execute(quiet)
+                p.execute(quiet, dba)
             elif not quiet:
                 print '[CUCKOO] Would have run patch %s' % p.patch
                 
@@ -90,7 +90,7 @@ def dryrun(stream=sys.stdout, directory=None):
     """Call run, without executing the patches"""
     run(directory, execute=False)
 
-def force(stream=sys.stdout, directory=None, quiet=False):
+def force(stream=sys.stdout, directory=None, quiet=False, dba=False):
     """Run all patches, even if they are already in the database"""
     patches = get_patches(directory)
     for patch, sql in patches:
@@ -99,7 +99,7 @@ def force(stream=sys.stdout, directory=None, quiet=False):
             p.sql = sql
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql, output='')
-        p.execute(quiet)
+        p.execute(quiet, dba)
 
 
 def fake(stream=sys.stdout, directory=None, quiet=False):
