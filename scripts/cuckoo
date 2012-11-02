@@ -13,6 +13,11 @@ else:
     sys.exit(1)
 
 from django.conf import settings
+
+if settings.DATABASES['default']['ENGINE'] == 'django.contrib.gis.db.backends.postgis':
+    settings.DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
+
+
 settings.INSTALLED_APPS = ("cuckoo",)
 settings.TIME_ZONE = 'Pacific/Auckland'
 
