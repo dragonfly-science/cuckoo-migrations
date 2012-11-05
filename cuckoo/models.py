@@ -139,7 +139,7 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
 
     connection.close()
     env = settings.DATABASES['default']
-    dropcmd = ('dropdb   %(NAME)s -U %(USER)s -h %(HOST)s -e' + ('' if yes else 'i')) % env
+    dropcmd = ('dropdb   %(NAME)s -U dba -h %(HOST)s -e' + ('' if yes else 'i')) % env
     if env.get('PORT', None):
         dropcmd += ' -p %(PORT)s ' % env
     call(dropcmd, shell=True)
