@@ -24,10 +24,12 @@ settings.TIME_ZONE = 'Pacific/Auckland'
 from django.core import management
 
 from cuckoo.management.commands.cuckoo import command_list
+from cuckoo.models import create
 
 if __name__ == "__main__":
     argv = sys.argv
     if 'init' in argv:
+        create()
         sys.argv = [argv[0]] + ['syncdb']
     elif 'help' in argv or not any([cmd in argv for cmd in command_list] ): 
         argv.insert(1, 'help')

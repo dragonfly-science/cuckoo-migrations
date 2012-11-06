@@ -1,7 +1,7 @@
 import os,re
 from copy import deepcopy
 import sys
-from subprocess import Popen, PIPE, STDOUT, call
+from subprocess import Popen, PIPE, STDOUT, call, check_call
 
 from django.db import models, connection
 from django.conf import settings
@@ -156,3 +156,26 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
             print output
     except Exception as e:
         print CuckooError("[CUCKOO] Error while executing dump file %s\n %s" % (dumpfile, e))
+
+def create(stream=sys.stdout, drop=False, quiet=False, yes=True):
+
+    env = settings.DATABASES['default']
+    if env.get('PORT', None):
+        env['PORT'] = '-p %(PORT)s' % env
+
+    exists = None
+    try:
+        check_call("psql -U dba -lAt -h %(HOST)s %(PORT)s | grep -c '^%(NAME)s|' > /dev/null" % env, shell=True)
+        exists = True
+    except:
+        exists = False
+    if exists and drop:
+        connection.close()
+        dropcmd = ('dropdb  %(NAME)s -U dba -h %(HOST)s %(PORT)s -e' + ('' if yes else 'i')) % env
+        print '[CUCKOO] Dropped database %(NAME)s' % env
+        call(dropcmd, shell=True)
+        exists = False
+    if not exists:
+        createcmd = 'createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s %(PORT)s -e'  % env
+        call(createcmd, shell=True)
+        print '[CUCKOO] Created database %(NAME)s' % env

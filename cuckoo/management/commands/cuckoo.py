@@ -13,8 +13,9 @@ commands = {
     'status':  models.models.status,
     'clean':   models.models.clean,
     'refresh': models.models.refresh,
+    'create':  models.models.create,
     }
-command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean', 'refresh']
+command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean', 'refresh', 'create']
 command_arguments = {
     'status':  ('directory',), 
     'run':     ('directory', 'quiet', 'dba'), 
@@ -23,6 +24,7 @@ command_arguments = {
     'fake':    ('directory', 'quiet'), 
     'clean':   (),
     'refresh': ('dumpfile', 'create', 'quiet', 'yes'),
+    'create':  ('drop', 'quiet', 'yes'),
     }
 
 for command in command_list:
@@ -46,8 +48,11 @@ class Command(BaseCommand):
     make_option('--dba', '-D', dest='dba',
         action="store_true", default=False,
         help='Run psql scripts as user = dba'),
+    make_option('--drop', '-x', dest='drop',
+        action="store_true", default=False,
+        help='Drop existing database'),
         )
-    args = '[run, dryrun, force, fake, clean, refresh]'
+    args = '[run, dryrun, force, fake, clean, refresh, create]'
     help = help_string
 
     def handle(self, *args, **options):
