@@ -29,7 +29,8 @@ from cuckoo.models import create
 if __name__ == "__main__":
     argv = sys.argv
     if 'init' in argv:
-        create()
+        drop = '--drop' in argv
+        create(drop=drop)
         sys.argv = [argv[0]] + ['syncdb']
     elif 'help' in argv or not any([cmd in argv for cmd in command_list] ): 
         argv.insert(1, 'help')
