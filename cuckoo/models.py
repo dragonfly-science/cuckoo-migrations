@@ -18,9 +18,10 @@ class Patch(models.Model):
     class Meta:
         ordering = ['id']
 
-    def execute(self, quiet=False, dba=False):
-        """Apply a patch"""
-        directory = getattr(settings, 'CUCKOO_DIRECTORY', 'sql-patches')
+    def execute(self, quiet=False, dba=False, directory=None):
+        """ Apply a patch """
+        if directory is None:
+            directory = getattr(settings, 'CUCKOO_DIRECTORY', 'sql-patches')
         cuckoo_db_name = getattr(settings, 'CUCKOO_DB', 'default')
         patch_file = os.path.join(directory, self.patch)
         try:
@@ -36,7 +37,6 @@ def _execute_file(db_name, patch_file, exists=True, dba=False):
     from cuckoo.shells import get_db_shell_cmd
     shell_cmd = get_db_shell_cmd(db_name, exists, dba)
     shell_cmd = shell_cmd % patch_file
-    print shell_cmd
 
     p = Popen(shell_cmd, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
@@ -52,16 +52,19 @@ def get_patches(directory):
         except:
             directory = 'sql-patches'
     patches = []
+    files = []
     if not os.path.exists(directory):
         print "There is no patches directory: looking for a directory called '%s'.\n  note: see 'CUCKOO_DIRECTORY'" % directory
         sys.exit(1)
     for f in sorted(filter(lambda p: p.endswith('.sql'), os.listdir(directory))):
         sql = open(os.path.join(directory, f)).read()
+        files.append(f)
         patches.append((f, sql))
+    print files
     return patches
 
 def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False):
-    """Run patches that have not yet been run"""
+    """ Run patches that have not yet been run """
     patches = get_patches(directory)
 
     for patch, sql in patches:
@@ -70,7 +73,7 @@ def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False)
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql)
             if execute:
-                p.execute(quiet, dba)
+                p.execute(quiet, dba, directory)
             elif not quiet:
                 print '[CUCKOO] Would have run patch %s' % p.patch
                 

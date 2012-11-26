@@ -111,15 +111,16 @@ class Directory(unittest.TestCase):
         self.assertEqual(p.species, 'orientalis')
 
     def test_argument_directory(self):
-        run(directory = 'sql-patches')
+        run(directory='sql-patches')
         p = Species.objects.get(genus = 'Eudynamys')
         self.assertEqual(p.species, 'taitensis')
 
     def test_two_directories(self):
         """Patches with the same name should only be run once"""
-        run() #Use value from settings
-        run(directory = 'sql-patches')
+        run() # Use value from settings
+        run(directory='sql-patches')
         p = Species.objects.filter(genus = 'Eudynamys')
+        print [str(x) for x in p]
         self.assertEqual(len(p), 2)
 
 class Clean(unittest.TestCase):
