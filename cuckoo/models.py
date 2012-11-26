@@ -52,15 +52,12 @@ def get_patches(directory):
         except:
             directory = 'sql-patches'
     patches = []
-    files = []
     if not os.path.exists(directory):
         print "There is no patches directory: looking for a directory called '%s'.\n  note: see 'CUCKOO_DIRECTORY'" % directory
         sys.exit(1)
     for f in sorted(filter(lambda p: p.endswith('.sql'), os.listdir(directory))):
         sql = open(os.path.join(directory, f)).read()
-        files.append(f)
         patches.append((f, sql))
-    print files
     return patches
 
 def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False):
