@@ -18,43 +18,31 @@ class Patch(models.Model):
     class Meta:
         ordering = ['id']
 
-    def execute(self, quiet=False, dba=False):
-        """Apply a patch"""
-        directory = getattr(settings, 'CUCKOO_DIRECTORY', 'sql-patches')
+    def execute(self, quiet=False, dba=False, directory=None):
+        """ Apply a patch """
+        if directory is None:
+            directory = getattr(settings, 'CUCKOO_DIRECTORY', 'sql-patches')
+        cuckoo_db_name = getattr(settings, 'CUCKOO_DB', 'default')
         patch_file = os.path.join(directory, self.patch)
         try:
-            self.output = _execute_file(patch_file, dba=dba)
+            self.output = _execute_file(cuckoo_db_name, patch_file, dba=dba)
             self.save()
             if not quiet:
                 print '[CUCKOO] Ran patch %s' % self.patch
         except Exception as e:
             print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
 
-def _execute_file(patch_file, exists=True, dba=False):
+def _execute_file(db_name, patch_file, exists=True, dba=False):
+    """Run a migration"""
+    from cuckoo.shells import get_db_shell_cmd
+    shell_cmd = get_db_shell_cmd(db_name, exists, dba)
+    shell_cmd = shell_cmd % patch_file
 
-    # If defined directly
-    db_string = getattr(settings, 'CUCKOO_DATABASE_STRING', None)
-    # Else use the settings default databse settings 
-    if not db_string:
-        env = deepcopy(settings.DATABASES['default'])
-        if not exists:
-            env['NAME'] = 'postgres'
-        if dba or not exists:
-            env['USER'] = 'dba'
-        db_string = 'psql --set ON_ERROR_STOP=1 %(NAME)s -U %(USER)s -h %(HOST)s' % env
-        if env.get('PORT', None):
-            db_string += ' -p %(PORT)s' % env
-        db_string = db_string + ' -f %s'
-
-    cmd = db_string  % patch_file
-    print cmd
-    p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    p = Popen(shell_cmd, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     if p.returncode != 0 or re.search('ERROR', err):
         raise CuckooError(err)
     return out
-
-
 
 def get_patches(directory):
     """Return a list of all patches on disk"""
@@ -73,7 +61,7 @@ def get_patches(directory):
     return patches
 
 def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False):
-    """Run patches that have not yet been run"""
+    """ Run patches that have not yet been run """
     patches = get_patches(directory)
 
     for patch, sql in patches:
@@ -82,7 +70,7 @@ def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False)
         except Patch.DoesNotExist:
             p = Patch(patch=patch, sql=sql)
             if execute:
-                p.execute(quiet, dba)
+                p.execute(quiet, dba, directory)
             elif not quiet:
                 print '[CUCKOO] Would have run patch %s' % p.patch
                 
