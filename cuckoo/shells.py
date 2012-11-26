@@ -7,8 +7,7 @@ encapsulate the creation of the command string, and terminate the process with
 `os.execvp`. Thus there is no way to get the command or a pipe to it using the
 existing code. Instead, we duplicate the command string building here.
 
-
-In particular, mysql and sqlite3 do not allow you to specify a file
+NOTE: Unlike psql, mysql and sqlite3 do not allow you to specify a file
 to load statements from, instead it expects to have stdin
 redirected using '< statements.sql'
 """
@@ -88,8 +87,3 @@ def _get_db_command_function(env):
             }
     engine = env['ENGINE'].split('.')[-1]
     return db_type_functions.get(engine, None)
-
-
-
-
-
