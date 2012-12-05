@@ -81,7 +81,7 @@ def get_db_shell_cmd(db_name, exists, dba):
 
 def _get_db_command_function(env):
     db_type_functions = {
-            'postgresql_psychopg2': get_postgresql_command,
+            'postgresql_psycopg2': get_postgresql_command,
             'sqlite3': get_sqlite3_command,
             'mysql': get_mysql_command,
             }

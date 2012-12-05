@@ -7,5 +7,11 @@ DATABASES = {
         'TEST_NAME': 'cuckoo_test.sqlite',
     }
 }
+#DATABASES = {
+    #'default': {
+        #'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        #'NAME': 'cuckoo_db',
+    #}
+#}
 
 INSTALLED_APPS = ['cuckoo', 'species']
