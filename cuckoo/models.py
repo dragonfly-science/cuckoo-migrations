@@ -126,7 +126,8 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
         raise CuckooError('You must provide a valid dump file: %s' % dumpfile)
 
     connection.close()
-    env = settings.DATABASES['default']
+    cuckoo_db_name = getattr(settings, 'CUCKOO_DB', 'default')
+    env = settings.DATABASES[cuckoo_db_name]
     dropcmd = ('dropdb   %(NAME)s -U dba -h %(HOST)s -e' + ('' if yes else 'i')) % env
     if env.get('PORT', None):
         dropcmd += ' -p %(PORT)s ' % env
@@ -139,7 +140,7 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
         call(createcmd, shell=True)
     print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
-        output = _execute_file(dumpfile, exists=create, dba=True)
+        output = _execute_file(cuckoo_db_name, dumpfile, exists=create, dba=True)
         if not quiet:
             print output
     except Exception as e:
@@ -147,7 +148,8 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
 
 def create(stream=sys.stdout, drop=False, quiet=False, yes=True):
 
-    env = settings.DATABASES['default']
+    cuckoo_db_name = getattr(settings, 'CUCKOO_DB', 'default')
+    env = settings.DATABASES[cuckoo_db_name]
     if env.get('PORT', None):
         env['PORTP'] = '-p %(PORT)s' % env
     else:
