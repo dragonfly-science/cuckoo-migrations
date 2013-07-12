@@ -5,8 +5,9 @@ from subprocess import Popen, PIPE, STDOUT, call, check_call
 
 from django.db import models, connection
 from django.conf import settings
+from django.core.management.base import CommandError
 
-class CuckooError(Exception): pass
+class CuckooError(CommandError): pass
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
@@ -14,7 +15,7 @@ class Patch(models.Model):
     sql = models.TextField()
     last_modified = models.DateTimeField(auto_now=True)
     output = models.TextField(null=True, blank=True)
-    
+
     class Meta:
         ordering = ['id']
 
@@ -30,7 +31,7 @@ class Patch(models.Model):
             if not quiet:
                 print '[CUCKOO] Ran patch %s' % self.patch
         except Exception as e:
-            print CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
+            raise CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
 
 def _execute_file(db_name, patch_file, exists=True, dba=False):
     """Run a migration"""
@@ -73,7 +74,7 @@ def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False)
                 p.execute(quiet, dba, directory)
             elif not quiet:
                 print '[CUCKOO] Would have run patch %s' % p.patch
-                
+
 def dryrun(stream=sys.stdout, directory=None):
     """Call run, without executing the patches"""
     run(directory, execute=False)
@@ -112,13 +113,13 @@ def status(stream=sys.stdout, directory=None):
         except Patch.DoesNotExist:
             print "%25s     %s" % ('Not yet run', patch)
 
-    
+
 def clean(stream=sys.stdout):
     """Remove all patches from the database"""
     for p in Patch.objects.all():
         p.delete()
     print '[CUCKOO] Removed all patches from the database'
-    
+
 
 def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=None):
     """Apply a dump file, dropping and creating database."""
@@ -144,7 +145,7 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
         if not quiet:
             print output
     except Exception as e:
-        print CuckooError("[CUCKOO] Error while executing dump file %s\n %s" % (dumpfile, e))
+        raise CuckooError("[CUCKOO] Error while executing dump file %s\n %s" % (dumpfile, e))
 
 def create(stream=sys.stdout, drop=False, quiet=False, yes=True):
 
