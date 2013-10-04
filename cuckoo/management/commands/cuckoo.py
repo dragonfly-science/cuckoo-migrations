@@ -6,10 +6,10 @@ from .. import models
 help_string = """cuckoo will run any database patches that haven't yet been applied
 """
 commands = {
-    'run':     models.models.run, 
+    'run':     models.models.run,
     'dryrun':  models.models.dryrun,
-    'force':   models.models.force, 
-    'fake':    models.models.fake, 
+    'force':   models.models.force,
+    'fake':    models.models.fake,
     'status':  models.models.status,
     'clean':   models.models.clean,
     'refresh': models.models.refresh,
@@ -17,19 +17,19 @@ commands = {
     }
 command_list = ['status', 'run', 'dryrun', 'force', 'fake', 'clean', 'refresh', 'create']
 command_arguments = {
-    'status':  ('directory',), 
-    'run':     ('directory', 'quiet', 'dba'), 
+    'status':  ('directory',),
+    'run':     ('directory', 'quiet', 'dba'),
     'dryrun':  ('directory',),
-    'force':   ('directory', 'quiet', 'dba'), 
-    'fake':    ('directory', 'quiet'), 
+    'force':   ('directory', 'quiet', 'dba'),
+    'fake':    ('directory', 'quiet'),
     'clean':   (),
-    'refresh': ('dumpfile', 'create', 'quiet', 'yes'),
+    'refresh': ('dumpfile', 'create', 'quiet', 'yes', 'pgformat'),
     'create':  ('drop', 'quiet', 'yes'),
     }
 
 for command in command_list:
     help_string += '\n%15s   %s'%(command, commands[command].__doc__)
-    
+
 class Command(BaseCommand):
     option_list = BaseCommand.option_list + (
     make_option('--path', '-p', dest='directory',
@@ -51,6 +51,9 @@ class Command(BaseCommand):
     make_option('--drop', '-x', dest='drop',
         action="store_true", default=False,
         help='Drop existing database'),
+    make_option('--pgformat', '-f', dest='pgformat',
+        action="store_true", default=False,
+        help='Use pg_restore and postgresql custom format'),
         )
     args = '[run, dryrun, force, fake, clean, refresh, create]'
     help = help_string

@@ -121,7 +121,7 @@ def clean(stream=sys.stdout):
     print '[CUCKOO] Removed all patches from the database'
 
 
-def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=None):
+def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=None, pgformat=False):
     """Apply a dump file, dropping and creating database."""
     if not dumpfile or not os.path.exists(dumpfile):
         raise CuckooError('You must provide a valid dump file: %s' % dumpfile)
@@ -141,9 +141,16 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
         call(createcmd, shell=True)
     print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
-        output = _execute_file(cuckoo_db_name, dumpfile, exists=create, dba=True)
-        if not quiet:
-            print output
+        if pgformat:
+            restorecmd = 'pg_restore -e -Fc -j 4 -h %(HOST)s -U dba -d %(NAME)s' % env
+            if env.get('PORT', None):
+                restorecmd += ' -p %(PORT)s ' % env
+            restorecmd += ' %s' % dumpfile
+            call(restorecmd, shell=True)
+        else:
+            output = _execute_file(cuckoo_db_name, dumpfile, exists=create, dba=True)
+            if not quiet:
+                print output
     except Exception as e:
         raise CuckooError("[CUCKOO] Error while executing dump file %s\n %s" % (dumpfile, e))
 
