@@ -121,6 +121,18 @@ def clean(stream=sys.stdout):
     print '[CUCKOO] Removed all patches from the database'
 
 
+def database_exists(database):
+    cmd = 'psql -ltA -U dba'
+    p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate()
+    return database in [r.split('|')[0] for r in out.split('\n')]
+
+
+def checked_call(cmd, errormsg):
+    if call(cmd, shell=True) != 0:
+        raise CuckooError(errormsg)
+
+
 def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=None, pgformat=False):
     """Apply a dump file, dropping and creating database."""
     if not dumpfile or not os.path.exists(dumpfile):
@@ -132,13 +144,15 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
     dropcmd = ('dropdb   %(NAME)s -U dba -h %(HOST)s -e' + ('' if yes else 'i')) % env
     if env.get('PORT', None):
         dropcmd += ' -p %(PORT)s ' % env
-    call(dropcmd, shell=True)
+    if database_exists(env['NAME']):
+        print '[CUCKOO] Dropping database.'
+        checked_call(dropcmd, "could not drop database")
     if create:
         print '[CUCKOO] Creating database.'
-        createcmd = 'createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s -e'  % env
+        createcmd = 'createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s -e' % env
         if env.get('PORT', None):
             createcmd += ' -p %(PORT)s ' % env
-        call(createcmd, shell=True)
+        checked_call(createcmd, "Could not create database")
     print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
         if pgformat:
@@ -146,7 +160,7 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
             if env.get('PORT', None):
                 restorecmd += ' -p %(PORT)s ' % env
             restorecmd += ' %s' % dumpfile
-            call(restorecmd, shell=True)
+            checked_call(restorecmd, "could not restore database")
         else:
             output = _execute_file(cuckoo_db_name, dumpfile, exists=create, dba=True)
             if not quiet:
