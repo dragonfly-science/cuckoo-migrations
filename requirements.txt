@@ -1,0 +1,5 @@
+nose
+django
+psycopg2
+django-configurations
+dj-database-url
