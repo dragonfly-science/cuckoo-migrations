@@ -24,7 +24,10 @@ def get_postgresql_command(settings_dict, cmd='psql'):
         args.extend(["-h", settings_dict['HOST']])
     if settings_dict['PORT']:
         args.extend(["-p", str(settings_dict['PORT'])])
-    args += [settings_dict['NAME']]
+    if 'pg_restore' not in cmd:
+        args += [settings_dict['NAME']]
+    else:
+        args.extend(['-d', settings_dict['NAME']])
     return ' '.join(args)
 
 

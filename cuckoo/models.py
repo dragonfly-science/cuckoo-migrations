@@ -164,6 +164,7 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
         if pgformat:
             restorecmd = get_db_shell_cmd(cuckoo_db_name, True, True, 'pg_restore -e -Fc -j 4')
             restorecmd += ' %s' % dumpfile
+            print restorecmd
             checked_call(restorecmd, "could not restore database")
         else:
             output = _execute_file(cuckoo_db_name, dumpfile, exists=create, dba=True)
