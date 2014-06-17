@@ -3,16 +3,28 @@
     Command line interface to the cuckoo tool.
     Designed to be run independently of django
 """
-import sys, os
+import sys
+import os
 sys.path.append('.')
 
-if os.path.exists('settings.py'):
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'settings'
-else:
-    print "Please create a settings file. See django conf for more details."
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
+os.environ.setdefault('DJANGO_CONFIGURATION', 'Local')
+
+try:
+    from django.conf import settings
+except:
+    print "Please create a settings file and set DJANGO_SETTINGS_MODULE. See django conf for more details."
     sys.exit(1)
 
-from django.conf import settings
+try:
+    from configurations import importer
+    importer.install()
+    # this should fail in django-configurations not being used
+    breakthis = settings.SECRET_KEY
+    from configurations.management import execute_from_command_line
+except:
+    from django.core.management import execute_from_command_line
+
 
 if settings.DATABASES['default']['ENGINE'] == 'django.contrib.gis.db.backends.postgis':
     settings.DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql_psycopg2'
@@ -21,7 +33,6 @@ if settings.DATABASES['default']['ENGINE'] == 'django.contrib.gis.db.backends.po
 settings.INSTALLED_APPS = ("cuckoo",)
 settings.TIME_ZONE = 'Pacific/Auckland'
 
-from django.core import management
 
 from cuckoo.management.commands.cuckoo import command_list
 from cuckoo.models import create
@@ -32,11 +43,11 @@ if __name__ == "__main__":
         drop = '--drop' in argv
         create(drop=drop)
         sys.argv = [argv[0]] + ['syncdb']
-    elif 'help' in argv or not any([cmd in argv for cmd in command_list] ): 
+    elif 'help' in argv or not any([cmd in argv for cmd in command_list]):
         argv.insert(1, 'help')
         argv.insert(2, 'cuckoo')
         argv[0] = ''
     else:
         argv.insert(1, 'cuckoo')
-    management.execute_from_command_line()
+    execute_from_command_line()
 

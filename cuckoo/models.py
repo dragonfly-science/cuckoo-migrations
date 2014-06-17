@@ -7,7 +7,12 @@ from django.db import models, connection
 from django.conf import settings
 from django.core.management.base import CommandError
 
-class CuckooError(CommandError): pass
+from .shells import get_db_shell_cmd
+
+
+class CuckooError(CommandError):
+    pass
+
 
 class Patch(models.Model):
     """Class to hold information on patches that have been run"""
@@ -33,17 +38,18 @@ class Patch(models.Model):
         except Exception as e:
             raise CuckooError("[CUCKOO] Error while executing patch %s\n %s" % (self.patch, e))
 
+
 def _execute_file(db_name, patch_file, exists=True, dba=False):
     """Run a migration"""
-    from cuckoo.shells import get_db_shell_cmd
     shell_cmd = get_db_shell_cmd(db_name, exists, dba)
-    shell_cmd = shell_cmd % patch_file
+    shell_cmd = shell_cmd + ' -f %s' % patch_file
 
     p = Popen(shell_cmd, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     if p.returncode != 0 or re.search('ERROR', err):
         raise CuckooError(err)
     return out
+
 
 def get_patches(directory):
     """Return a list of all patches on disk"""
@@ -61,6 +67,7 @@ def get_patches(directory):
         patches.append((f, sql))
     return patches
 
+
 def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False):
     """ Run patches that have not yet been run """
     patches = get_patches(directory)
@@ -75,9 +82,11 @@ def run(stream=sys.stdout, directory=None, quiet=False, execute=True, dba=False)
             elif not quiet:
                 print '[CUCKOO] Would have run patch %s' % p.patch
 
+
 def dryrun(stream=sys.stdout, directory=None):
     """Call run, without executing the patches"""
     run(directory, execute=False)
+
 
 def force(stream=sys.stdout, directory=None, quiet=False, dba=False):
     """Run all patches, even if they are already in the database"""
@@ -102,6 +111,7 @@ def fake(stream=sys.stdout, directory=None, quiet=False):
             p.save()
             print '[CUCKOO] Fake-run patch %s' % p.patch
 
+
 def status(stream=sys.stdout, directory=None):
     """Display the current state."""
     print "[CUCKOO] The following patches have been run on the system"
@@ -121,6 +131,18 @@ def clean(stream=sys.stdout):
     print '[CUCKOO] Removed all patches from the database'
 
 
+def database_exists(database):
+    cmd = 'psql -ltA -U dba'
+    p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate()
+    return database in [r.split('|')[0] for r in out.split('\n')]
+
+
+def checked_call(cmd, errormsg):
+    if call(cmd, shell=True) != 0:
+        raise CuckooError(errormsg)
+
+
 def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=None, pgformat=False):
     """Apply a dump file, dropping and creating database."""
     if not dumpfile or not os.path.exists(dumpfile):
@@ -129,24 +151,21 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
     connection.close()
     cuckoo_db_name = getattr(settings, 'CUCKOO_DB', 'default')
     env = settings.DATABASES[cuckoo_db_name]
-    dropcmd = ('dropdb   %(NAME)s -U dba -h %(HOST)s -e' + ('' if yes else 'i')) % env
-    if env.get('PORT', None):
-        dropcmd += ' -p %(PORT)s ' % env
-    call(dropcmd, shell=True)
+    dropcmd = get_db_shell_cmd(cuckoo_db_name, True, True, 'dropdb')
+    if database_exists(env['NAME']):
+        print '[CUCKOO] Dropping database.'
+        checked_call(dropcmd, "could not drop database")
     if create:
         print '[CUCKOO] Creating database.'
-        createcmd = 'createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s -e'  % env
-        if env.get('PORT', None):
-            createcmd += ' -p %(PORT)s ' % env
-        call(createcmd, shell=True)
+        createcmd = get_db_shell_cmd(cuckoo_db_name, False, True, 'createdb')
+        checked_call(createcmd, "Could not create database")
     print '[CUCKOO] Applying dump file: %s' % dumpfile
     try:
         if pgformat:
-            restorecmd = 'pg_restore -e -Fc -j 4 -h %(HOST)s -U dba -d %(NAME)s' % env
-            if env.get('PORT', None):
-                restorecmd += ' -p %(PORT)s ' % env
+            restorecmd = get_db_shell_cmd(cuckoo_db_name, True, True, 'pg_restore -e -Fc -j 4')
             restorecmd += ' %s' % dumpfile
-            call(restorecmd, shell=True)
+            print restorecmd
+            checked_call(restorecmd, "could not restore database")
         else:
             output = _execute_file(cuckoo_db_name, dumpfile, exists=create, dba=True)
             if not quiet:
@@ -154,28 +173,26 @@ def refresh(stream=sys.stdout, dumpfile=None, create=False, quiet=False, yes=Non
     except Exception as e:
         raise CuckooError("[CUCKOO] Error while executing dump file %s\n %s" % (dumpfile, e))
 
+
 def create(stream=sys.stdout, drop=False, quiet=False, yes=True):
 
     cuckoo_db_name = getattr(settings, 'CUCKOO_DB', 'default')
     env = settings.DATABASES[cuckoo_db_name]
-    if env.get('PORT', None):
-        env['PORTP'] = '-p %(PORT)s' % env
-    else:
-        env['PORTP'] = ''
-
     exists = None
     try:
-        check_call("psql -U dba -lAt -h %(HOST)s %(PORTP)s | grep -c '^%(NAME)s|' > /dev/null" % env, shell=True)
-        exists = True
+        exists = not bool(
+            check_call(
+                get_db_shell_cmd(cuckoo_db_name, exists, True)
+                + " -lAt | grep -c '^%(NAME)s|' > /dev/null" % env, shell=True))
     except:
         exists = False
     if exists and drop:
         connection.close()
-        dropcmd = ('dropdb  %(NAME)s -U dba -h %(HOST)s %(PORTP)s -e' + ('' if yes else 'i')) % env
+        dropcmd = get_db_shell_cmd(cuckoo_db_name, exists, True, 'dropdb')
         print '[CUCKOO] Dropped database %(NAME)s' % env
-        call(dropcmd, shell=True)
+        checked_call(dropcmd, 'could not drop database')
         exists = False
     if not exists:
-        createcmd = 'createdb -U dba %(NAME)s -O %(USER)s -h %(HOST)s %(PORTP)s -e'  % env
-        call(createcmd, shell=True)
+        createcmd = get_db_shell_cmd(cuckoo_db_name, False, True, 'createdb')
+        checked_call(createcmd, 'could not create database')
         print '[CUCKOO] Created database %(NAME)s' % env
