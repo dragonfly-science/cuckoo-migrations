@@ -1,7 +1,7 @@
 from distutils.core import setup
 
 setup(name = "cuckoo",
-    version = "1.31",
+    version = "1.32",
     description = "Simple migrations for Django",
     author = "Edward Abraham",
     author_email = "edward@dragonfly.co.nz",
