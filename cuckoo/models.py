@@ -132,7 +132,8 @@ def clean(stream=sys.stdout):
 
 
 def database_exists(database):
-    cmd = 'psql -ltA -U dba'
+    cuckoo_db_name = getattr(settings, 'CUCKOO_DB', 'default')
+    cmd = get_db_shell_cmd(cuckoo_db_name, False, True, 'psql -ltA')
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     return database in [r.split('|')[0] for r in out.split('\n')]
